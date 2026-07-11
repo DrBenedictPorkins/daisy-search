@@ -48,6 +48,27 @@ messy OSINT trail honest.
         └───────────────────────┘
 ```
 
+## See it in action
+
+> **Note —** the case file below is a **synthetic demo persona.** `Gina Talia-Faker` is not a real
+> person — every value is fabricated (`example.*` domains, the reserved `555-01xx` phone range,
+> invented places like *Testville, EX*).
+
+The read-only dashboard presents each subject as a **case file**: facts grouped by lifecycle state,
+every one scored and traceable to its source, with a per-source **fetch audit** (including blocked
+and auth-walled pages).
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-light.png" alt="Daisy read-only dashboard: sourced, confidence-scored facts grouped into Confirmed / Likely / Other, with a subject panel and fetch-audit source list" width="900">
+</p>
+
+Confirmed facts are cross-linked and de-duplicated into a navigable **identity graph** —
+people, employers, addresses, accounts, and exposures around the subject at a glance:
+
+<p align="center">
+  <img src="docs/screenshots/graph-dark.png" alt="Identity graph linking the subject to employers, a school, addresses, accounts, an email/breach, and relatives" width="900">
+</p>
+
 ## Why it's different
 
 - **Agent-native.** Everything is an MCP tool. No brittle scraping DAGs — the model orchestrates,
