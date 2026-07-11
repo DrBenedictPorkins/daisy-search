@@ -1,142 +1,158 @@
-# Daisy Search
+<div align="center">
 
-A personal identity exposure and internet presence mapping system. Discovers, collects, evaluates, and continuously re-validates information about a person found on the public internet.
+# 🌼 Daisy Search
 
-Use cases:
-- **Self-audit** -- understand your own digital footprint
-- **Research** -- map the public presence of any individual
-- **Continuous monitoring** -- re-validate findings as new evidence surfaces
+**An AI-orchestrated OSINT research engine.**
 
-## Quick Start
+Point a Claude agent at a name. It plans the investigation, runs the searches, fetches the pages,
+extracts structured facts, scores them, cross-links them into an identity graph — and remembers
+everything across sessions in a shared Postgres brain.
 
-### Prerequisites
-- [UV](https://docs.astral.sh/uv/) (Python package manager)
-- [Docker](https://www.docker.com/) (for Postgres and Redis)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-async-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-brain-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Neo4j](https://img.shields.io/badge/Neo4j-graph-4581C3?logo=neo4j&logoColor=white)](https://neo4j.com/)
+[![MCP](https://img.shields.io/badge/MCP-server-black)](https://modelcontextprotocol.io/)
+[![UV](https://img.shields.io/badge/UV-managed-DE5FE9)](https://docs.astral.sh/uv/)
 
-### Install & Run
+</div>
+
+---
+
+## What it is
+
+Daisy is not a script you run — it's a **toolbox an AI agent drives.** It plugs into Claude Code or
+Claude Desktop as a [Model Context Protocol](https://modelcontextprotocol.io/) server. The agent is the
+investigator; Daisy is the lab. The agent decides *what* to look for and *when* to trust it; Daisy handles
+search, retrieval, extraction, persistence, and graphing — and enforces the discipline that keeps a
+messy OSINT trail honest.
+
+```
+        ┌──────────────────────────────────────────────┐
+        │   Claude Code / Desktop  (the investigator)   │
+        │   plans · reasons · decides what to trust     │
+        └───────────────────────┬──────────────────────┘
+                     MCP tools   │   (17 of them)
+        ┌───────────────────────▼──────────────────────┐
+        │            Daisy MCP Server (the lab)         │
+        │  search · fetch · extract · fact · graph      │
+        └───┬───────────┬───────────┬───────────┬──────┘
+            │           │           │           │
+      ┌─────▼────┐ ┌────▼─────┐ ┌───▼────┐ ┌────▼─────┐
+      │ Postgres │ │  Neo4j   │ │ SearXNG│ │ crawl4ai │
+      │  (brain) │ │ (graph)  │ │(search)│ │ (fetch)  │
+      └──────────┘ └──────────┘ └────────┘ └──────────┘
+                    ▲
+        ┌───────────┴───────────┐
+        │  Web dashboard (RO)   │  read-only view of the case file
+        └───────────────────────┘
+```
+
+## Why it's different
+
+- **Agent-native.** Everything is an MCP tool. No brittle scraping DAGs — the model orchestrates,
+  branches, and backtracks in natural language.
+- **Facts are immutable & sourced.** Every claim is a permanent, timestamped record tied to its source.
+  Nothing is silently edited. Only a fact's *lifecycle state* changes, and every transition is logged.
+- **Built-in skepticism.** Findings require converging signals before promotion. A single noisy
+  people-search hit doesn't become truth.
+- **A shared brain across sessions.** Close the laptop, come back tomorrow — the case is exactly where
+  you left it, in Postgres.
+- **Fetch audit trail.** Every retrieval attempt is recorded (success, block, auth-wall), so you always
+  know what was actually seen versus assumed.
+- **Identity graph.** Entities, addresses, employers, and accounts are de-duplicated and linked into a
+  navigable Neo4j graph.
+
+## The fact lifecycle
+
+Every discovered claim is an immutable record that moves through states — it is never deleted or rewritten:
+
+```
+   unconfirmed ──▶ likely ──▶ confirmed
+        │            │
+        └────────────┴──▶ discarded
+                     └──▶ needs_revalidation ──▶ (re-enters the pipeline)
+```
+
+## The toolbox
+
+The agent works entirely through these MCP tools, all scoped to the active project:
+
+| Area | Tools |
+|------|-------|
+| **Projects** | `daisy_projects` · `daisy_new_project` · `daisy_switch_project` · `daisy_archive_project` |
+| **Discovery** | `daisy_intake` · `daisy_search` · `daisy_fetch` · `daisy_extract` |
+| **Fetch audit** | `daisy_fetch_log` · `daisy_fetch_summary` |
+| **Facts** | `daisy_add_fact` · `daisy_facts` · `daisy_confirm` · `daisy_sources` |
+| **Graph** | `daisy_build_graph` · `daisy_graph` |
+| **Output** | `daisy_report` |
+
+The methodology guide ships as an MCP resource at `daisy://methodology`, so the agent onboards itself.
+
+## Quick start
+
+**Prerequisites:** [UV](https://docs.astral.sh/uv/) · [Docker](https://www.docker.com/)
 
 ```bash
-# Clone and enter the project
-cd daisy-search
-
-# Start infrastructure
+# 1. Bring up the stack (Postgres · Redis · Neo4j · SearXNG · crawl4ai)
 docker compose up -d
 
-# Install dependencies
+# 2. Install dependencies
 uv sync
 
-# Copy environment config
+# 3. Configure and migrate
 cp .env.example .env
-
-# Run database migrations
 uv run alembic upgrade head
 
-# Start the API server
-uv run uvicorn daisy.api.app:app --reload
+# 4a. Run as an MCP server (for Claude Code / Desktop)
+uv run daisy-mcp
+
+# 4b. …or open the read-only dashboard
+uv run uvicorn daisy.api.app:app --reload   # http://localhost:8000
 ```
 
-The API will be available at `http://localhost:8000`. Health check: `GET /health`.
+Then register the server with your Claude client and say: *"Start a new search for …"*
 
-## Architecture
+## Tech stack
 
-Daisy Search uses a **worker pipeline** architecture. Each stage of the research process is handled by a specialized worker:
-
-```
-Intake -> Discovery -> Acquisition -> Extraction -> Scoring -> Resolution
-                                                                  |
-                                                            Human Review
-```
-
-### Workers
-
-| Worker | Responsibility |
-|--------|---------------|
-| **Intake** | Expands vague inputs into search queries, name variants, and username guesses |
-| **Discovery** | Runs exploratory searches and returns candidate URLs |
-| **Acquisition** | Fetches and stores raw content snapshots |
-| **Extraction** | Extracts structured claims from content (LLM-assisted) |
-| **Scoring** | Calculates confidence scores and updates fact lifecycle |
-| **Resolution** | Clusters identity matches and handles name collisions |
-| **Review** | Prepares facts for human validation |
-
-### Fact Lifecycle
-
-Every discovered claim is stored as an immutable **fact** that moves through lifecycle states:
-
-```
-unconfirmed -> likely -> confirmed
-                 \-> discarded
-                 \-> needs_revalidation -> (re-enters pipeline)
-```
-
-Facts are never deleted or modified. State transitions are logged in `fact_events` for full auditability.
-
-## Tech Stack
-
-| Component | Technology |
-|-----------|-----------|
-| Language | Python 3.11 |
-| API | FastAPI + Uvicorn |
-| Database | PostgreSQL 16 |
-| Queue | Redis + RQ |
-| ORM | SQLAlchemy 2.x (async) |
-| Migrations | Alembic |
-| Config | pydantic-settings |
-| Package Manager | UV |
+| Layer | Tech |
+|-------|------|
+| Orchestrator | Claude Code / Claude Desktop (via MCP) |
+| Tool server | Python 3.11 · [MCP](https://modelcontextprotocol.io/) |
+| API / dashboard | FastAPI · Uvicorn · Jinja2 |
+| Persistence | PostgreSQL (async, asyncpg) · SQLAlchemy 2.x · Alembic |
+| Identity graph | Neo4j |
+| Search / fetch | SearXNG · crawl4ai · trafilatura |
+| Queue (optional batch) | Redis · RQ |
+| Packaging | UV |
 
 ## Development
 
-### Running Tests
 ```bash
-uv run pytest
+uv run pytest                 # tests
+uv run ruff check src/        # lint
+uv run alembic revision --autogenerate -m "…"   # new migration
+docker exec -it daisy-postgres psql -U daisy -d daisy   # DB shell
 ```
 
-### Linting
-```bash
-uv run ruff check src/
-```
-
-### Creating a Migration
-```bash
-uv run alembic revision --autogenerate -m "describe the change"
-uv run alembic upgrade head
-```
-
-### Database Access
-```bash
-# Connect to local Postgres
-docker exec -it daisy-postgres psql -U daisy -d daisy
-```
-
-## Project Structure
+## Project layout
 
 ```
-daisy-search/
-├── src/daisy/
-│   ├── models/          # SQLAlchemy ORM models
-│   ├── workers/         # Pipeline workers
-│   ├── queue/           # Job dispatch (RQ)
-│   ├── api/             # FastAPI application
-│   │   └── routes/      # API endpoints
-│   └── web/             # Frontend templates & static assets
-├── migrations/          # Alembic migrations
-├── tests/               # Test suite
-├── docker-compose.yml   # Postgres + Redis
-└── pyproject.toml       # Project config (UV)
+src/daisy/
+├── mcp_server.py     # all research tools live here
+├── constants.py      # enums, magic strings, defaults
+├── config.py         # pydantic-settings (env-driven)
+├── graph.py          # identity graph construction
+├── models/           # SQLAlchemy ORM (project · subject · fact · source · …)
+├── api/              # read-only FastAPI dashboard
+└── web/              # templates & static assets
+migrations/           # Alembic
 ```
 
-## Roadmap
+## Responsible use
 
-- [x] Project scaffolding & DB schema
-- [ ] Phase 1: Core pipeline (Intake -> Discovery -> Acquisition -> Extraction)
-- [ ] Phase 2: Scoring, Resolution & Review UI
-- [ ] Phase 3: Re-validation loop & continuous monitoring
-- [ ] Phase 4: Tethernet integration, export, and multi-subject support
-
-## Infrastructure
-
-### Local Development
-Everything runs on the local machine via Docker (Postgres + Redis) and UV (Python).
-
-### Production
-Designed to run on a GPU-equipped Ubuntu server for local LLM inference (extraction worker) and high-throughput crawling.
+Daisy is built for **legitimate, authorized work** — auditing your own footprint, consented
+research, journalism, and security work — using only **public records, published reporting, and
+breach-aggregator data.** It does not defeat authentication, evade access controls, or use recovered
+credentials, and it is not for surveillance, stalking, or harassment. You are responsible for
+complying with all applicable laws and platform terms in your jurisdiction.
