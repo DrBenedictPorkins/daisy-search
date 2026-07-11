@@ -1,0 +1,126 @@
+# {{SUBJECT_NAME}} - Research Dossier
+
+**Project ID:** {{PROJECT_ID}}
+**Last Updated:** {{DATE}}
+**Status:** New — not started
+**Facts:** 0
+
+---
+
+## Subject Profile
+
+| Field | Value | Source | Confidence |
+|---|---|---|---|
+| Full Name | {{SUBJECT_NAME}} | User provided | — |
+
+## Family
+
+(not yet researched)
+
+## Residence Timeline
+
+(not yet researched)
+
+## Career Timeline
+
+(not yet researched)
+
+## Digital Footprint
+
+| Platform | Handle/URL | Notes |
+|---|---|---|
+| | | |
+
+## Notable Connections
+
+(not yet researched)
+
+## Property Records
+
+(not yet researched)
+
+## Hobbies / Personal
+
+(not yet researched)
+
+---
+
+## Outstanding Questions
+
+1. Everything — this is a new investigation.
+
+## Search Categories Not Yet Explored
+
+### Social Profiles
+- [ ] LinkedIn
+- [ ] Facebook
+- [ ] Instagram
+- [ ] Twitter/X
+- [ ] GitHub
+- [ ] YouTube
+- [ ] TikTok
+- [ ] Reddit
+- [ ] Strava
+- [ ] Discord
+- [ ] Nextdoor
+- [ ] Personal website/blog
+
+### Employment & Professional
+- [ ] Company websites
+- [ ] Crunchbase
+- [ ] ZoomInfo
+- [ ] Press releases / news articles
+
+### Public Records
+- [ ] Property tax records
+- [ ] Voter registration
+- [ ] Marriage/divorce records
+- [ ] Court records
+- [ ] Business entity filings (state SOS)
+- [ ] OpenCorporates
+- [ ] OpenSanctions
+- [ ] UCC filings, liens, judgments
+- [ ] Obituaries
+- [ ] Political donations (FEC)
+- [ ] Professional licenses
+
+### People Search Aggregators
+- [ ] Spokeo
+- [ ] BeenVerified
+- [ ] TruePeopleSearch
+- [ ] ThatsThem
+- [ ] ZabaSearch
+- [ ] ClustrMaps
+- [ ] WhitePages
+- [ ] Radaris
+- [ ] Socialcatfish [paid]
+
+### Username Enumeration
+- [ ] WhatsMyName.app
+- [ ] Epieos.com [paid]
+
+### Breach / Data Leak
+- [ ] Have I Been Pwned
+- [ ] Dehashed [paid]
+
+### Reverse Image
+- [ ] Google Lens / Yandex Images
+- [ ] TinEye
+- [ ] PimEyes [paid]
+
+### Real Estate
+- [ ] Zillow / Redfin / Trulia
+- [ ] County tax portals
+- [ ] Deed transfer records
+
+## Data Sources Used
+
+| Source | Type | Auth Required | Data Obtained |
+|---|---|---|---|
+| | | | |
+
+## Technical Notes
+
+- Neo4j graph: run `daisy_build_graph` to rebuild
+- Graph HTML: run `uv run python scripts/gen_graph_html.py` from daisy root
+- vis.js graph at: `reports/graph.html`

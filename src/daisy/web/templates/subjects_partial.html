@@ -1,0 +1,33 @@
+{% if subjects %}
+<div class="subject-cards">
+    {% for item in subjects %}
+    <article class="subject-card">
+        <h4>{{ item.subject.name }}</h4>
+        <p>
+            <small>{{ item.alias_count }} alias{{ "es" if item.alias_count != 1 else "" }}</small>
+            &middot;
+            <small>{{ item.fact_count }} fact{{ "s" if item.fact_count != 1 else "" }}</small>
+        </p>
+        {% if item.subject.aliases %}
+        <details>
+            <summary>Aliases</summary>
+            <ul>
+                {% for alias in item.subject.aliases %}
+                <li><small><strong>{{ alias.alias_type }}:</strong> {{ alias.alias_value }}</small></li>
+                {% endfor %}
+            </ul>
+        </details>
+        {% endif %}
+        <a href="#"
+           hx-get="/projects/{{ project_id }}/facts?subject_id={{ item.subject.id }}"
+           hx-target="#tab-content"
+           hx-swap="innerHTML"
+           onclick="setActiveTab(document.querySelector('#tabs a:nth-child(2)'))">
+            View facts
+        </a>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<p>No subjects in this project yet.</p>
+{% endif %}

@@ -1,0 +1,115 @@
+---
+title: "OSINT Report: {{SUBJECT_NAME}}"
+subtitle: "Daisy Search — Confidential"
+date: "{{DATE}}"
+format:
+  html:
+    theme: darkly
+    toc: true
+    toc-depth: 3
+    toc-title: "Contents"
+    self-contained: true
+    code-fold: true
+---
+
+<style>
+@media print {
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; page-break-inside: avoid; }
+  th, td { break-inside: avoid; page-break-inside: avoid; }
+  h1, h2, h3 { break-after: avoid; page-break-after: avoid; }
+  table { break-inside: auto; }
+}
+</style>
+
+::: {.callout-warning}
+**CONFIDENTIAL** — This report contains sensitive personal information collected for authorized research purposes only.
+:::
+
+## Subject Profile
+
+| Field | Value | Source | Confidence |
+|---|---|---|---|
+| Full Name | | | |
+| DOB | | | |
+| Current Address | | | |
+| Primary Phone | | | |
+| SSN | | | |
+| LinkedIn | | | |
+| Instagram | | | |
+
+## Known Emails
+
+| Email | Source | Confidence | Notes |
+|---|---|---|---|
+| | | | |
+
+## Known Phone Numbers
+
+| Phone | Carrier | Type | Source |
+|---|---|---|---|
+| | | | |
+
+## Residence Timeline
+
+| Period | Address | Source | Notes |
+|---|---|---|---|
+| | | | |
+
+## Career Timeline
+
+| Period | Role | Employer | Location | Notes |
+|---|---|---|---|---|
+| | | | | |
+
+## Family & Associates
+
+| Person | Relationship | Notes |
+|---|---|---|
+| | | |
+
+## Digital Footprint
+
+| Platform | Handle/URL | Status | Notes |
+|---|---|---|---|
+| | | | |
+
+## Credentials & Breach Exposure
+
+| Email | Breach | Date | Fields Exposed | Password |
+|---|---|---|---|---|
+| | | | | |
+
+## Property Records
+
+| Address | APN | Owners | Purchase Price | Purchase Date | Assessed Value |
+|---|---|---|---|---|---|
+| | | | | | |
+
+## Business Affiliations
+
+| Company | Role | Period | Jurisdiction | Notes |
+|---|---|---|---|---|
+| | | | | |
+
+## Public Records
+
+| Type | Case/Record # | Filed | Status | Notes |
+|---|---|---|---|---|
+| | | | | |
+
+## Political Donations
+
+| Recipient | Amount | Date | Source |
+|---|---|---|---|
+| | | | |
+
+## Outstanding Questions
+
+1.
+
+## Sources Used
+
+| Source | Type | Date Accessed | Data Obtained |
+|---|---|---|---|
+| | | | |

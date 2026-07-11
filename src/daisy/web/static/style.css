@@ -1,0 +1,361 @@
+/* Daisy Search — custom overrides (Pico CSS does the heavy lifting) */
+
+/* Lifecycle state badges */
+.badge {
+    display: inline-block;
+    padding: 0.15em 0.55em;
+    font-size: 0.8em;
+    font-weight: 600;
+    border-radius: 4px;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.badge-confirmed {
+    background-color: #2e7d32;
+    color: #fff;
+}
+
+.badge-likely {
+    background-color: #f9a825;
+    color: #000;
+}
+
+.badge-unconfirmed {
+    background-color: #9e9e9e;
+    color: #fff;
+}
+
+.badge-discarded {
+    background-color: #c62828;
+    color: #fff;
+}
+
+.badge-needs_revalidation {
+    background-color: #1565c0;
+    color: #fff;
+}
+
+/* Claim type badges */
+.badge-claim {
+    background-color: #37474f;
+    color: #fff;
+}
+
+/* Project status badges */
+.badge-active {
+    background-color: #2e7d32;
+    color: #fff;
+}
+
+.badge-paused {
+    background-color: #f9a825;
+    color: #000;
+}
+
+.badge-archived {
+    background-color: #9e9e9e;
+    color: #fff;
+}
+
+/* Confidence bar */
+.confidence-bar {
+    display: inline-block;
+    width: 60px;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    vertical-align: middle;
+    margin-right: 0.4em;
+}
+
+.confidence-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+}
+
+.confidence-high {
+    background-color: #2e7d32;
+}
+
+.confidence-medium {
+    background-color: #f9a825;
+}
+
+.confidence-low {
+    background-color: #c62828;
+}
+
+/* Navigation tabs for HTMX */
+.tab-nav {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--pico-muted-border-color, #e0e0e0);
+    margin-bottom: 1em;
+}
+
+.tab-nav a {
+    padding: 0.5em 1.2em;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    color: var(--pico-muted-color, #666);
+    font-weight: 500;
+}
+
+.tab-nav a.active,
+.tab-nav a[aria-selected="true"] {
+    border-bottom-color: var(--pico-primary, #1976d2);
+    color: var(--pico-primary, #1976d2);
+}
+
+.tab-nav a:hover {
+    color: var(--pico-primary, #1976d2);
+}
+
+/* Subject cards grid */
+.subject-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1em;
+}
+
+.subject-card {
+    border: 1px solid var(--pico-muted-border-color, #e0e0e0);
+    border-radius: 8px;
+    padding: 1em;
+}
+
+.subject-card h4 {
+    margin-bottom: 0.3em;
+}
+
+/* Project list table tweaks */
+.projects-table td,
+.projects-table th {
+    vertical-align: middle;
+}
+
+/* Fact list */
+.fact-item {
+    border-bottom: 1px solid var(--pico-muted-border-color, #e0e0e0);
+    padding: 0.75em 0;
+}
+
+.fact-item:last-child {
+    border-bottom: none;
+}
+
+.fact-meta {
+    font-size: 0.85em;
+    color: var(--pico-muted-color, #666);
+    margin-top: 0.25em;
+}
+
+/* Filter form inline layout */
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75em;
+    align-items: end;
+    margin-bottom: 1em;
+}
+
+.filter-form label {
+    margin-bottom: 0;
+    font-size: 0.85em;
+}
+
+.filter-form select,
+.filter-form input {
+    margin-bottom: 0;
+    padding: 0.3em 0.5em;
+    font-size: 0.9em;
+}
+
+.filter-form .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+}
+
+/* Source list */
+.source-item {
+    border-bottom: 1px solid var(--pico-muted-border-color, #e0e0e0);
+    padding: 0.5em 0;
+}
+
+.source-item:last-child {
+    border-bottom: none;
+}
+
+/* Stat counters */
+.stat-grid {
+    display: flex;
+    gap: 1.5em;
+    flex-wrap: wrap;
+    margin-bottom: 1em;
+}
+
+.stat-box {
+    text-align: center;
+}
+
+.stat-box .stat-value {
+    font-size: 1.8em;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stat-box .stat-label {
+    font-size: 0.8em;
+    color: var(--pico-muted-color, #666);
+}
+
+/* Truncate long URLs */
+.truncate-url {
+    max-width: 350px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* ── Redesigned facts view ───────────────────────────────────── */
+
+.facts-section {
+    margin-bottom: 2em;
+}
+
+.facts-section-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    font-size: 1.1em;
+    font-weight: 700;
+    margin-bottom: 0.75em;
+    padding-bottom: 0.4em;
+    border-bottom: 2px solid var(--pico-muted-border-color, #e0e0e0);
+}
+
+.facts-heading-confirmed {
+    border-bottom-color: #2e7d32;
+    color: #2e7d32;
+}
+
+.facts-heading-likely {
+    border-bottom-color: #f9a825;
+    color: #7a5000;
+}
+
+.facts-heading-other {
+    border-bottom-color: #9e9e9e;
+    color: #666;
+}
+
+.facts-count-badge {
+    display: inline-block;
+    background: var(--pico-muted-border-color, #e0e0e0);
+    color: #444;
+    font-size: 0.75em;
+    font-weight: 600;
+    padding: 0.15em 0.6em;
+    border-radius: 10px;
+}
+
+.facts-collapsible summary {
+    cursor: pointer;
+    list-style: none;
+    margin-bottom: 0.75em;
+}
+
+.facts-collapsible summary::-webkit-details-marker {
+    display: none;
+}
+
+.facts-collapsible summary::before {
+    content: "+ ";
+    font-weight: 700;
+    color: var(--pico-muted-color, #666);
+}
+
+.facts-collapsible[open] summary::before {
+    content: "- ";
+}
+
+.fact-type-group {
+    margin-bottom: 1.25em;
+}
+
+.fact-type-label {
+    font-size: 0.78em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--pico-muted-color, #666);
+    margin-bottom: 0.4em;
+    padding-left: 0.75em;
+}
+
+.fact-card {
+    border-left: 4px solid #ccc;
+    background: var(--pico-card-background-color, #fff);
+    border-radius: 0 6px 6px 0;
+    padding: 0.6em 0.9em;
+    margin-bottom: 0.5em;
+}
+
+.fact-card-confirmed {
+    border-left-color: #2e7d32;
+    background: #f6fdf6;
+}
+
+.fact-card-likely {
+    border-left-color: #f9a825;
+    background: #fffdf2;
+}
+
+.fact-card-other {
+    border-left-color: #bdbdbd;
+    background: var(--pico-card-background-color, #fff);
+}
+
+.fact-card-text {
+    font-size: 0.95em;
+    line-height: 1.5;
+    margin-bottom: 0.3em;
+}
+
+.fact-card-meta {
+    font-size: 0.8em;
+    color: var(--pico-muted-color, #666);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4em;
+}
+
+.fact-confidence {
+    font-weight: 600;
+    font-size: 0.85em;
+    color: #666;
+}
+
+.fact-filter-link {
+    margin-left: auto;
+    font-size: 0.85em;
+    white-space: nowrap;
+    color: var(--pico-muted-color, #999);
+}
+
+.fact-filter-link:hover {
+    color: var(--pico-primary, #1976d2);
+}
+
+.filter-btn {
+    margin: 0;
+    padding: 0.3em 1em;
+    font-size: 0.9em;
+}

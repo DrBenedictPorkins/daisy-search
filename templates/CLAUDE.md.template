@@ -1,0 +1,325 @@
+# Daisy Search: {{SUBJECT_NAME}}
+
+**Subject:** {{SUBJECT_NAME}}
+**Type:** {{DESCRIPTION}}
+**Created:** {{DATE}}
+
+## CRITICAL RULES
+- NEVER run any git commands unless the user explicitly says to
+- NEVER ask to commit, suggest committing, or mention git
+- NEVER propose or suggest git operations
+- Always checkpoint (update SESSION_STATE.md) before ending a session
+
+## How This Works
+This is a Daisy Search investigation directory. You have access to:
+- **daisy-search MCP server** — OSINT research tools (search, fetch, extract, facts, graph)
+- **claude-in-chrome** — Chrome browser automation using your existing logged-in sessions (primary for auth-walled sites)
+- **tethernet** — browser automation with network capture (for SPA/XHR interception)
+- **axmcp** — Safari/macOS accessibility automation (AppleScript + AX tools)
+
+The full research methodology is loaded as an MCP resource at `daisy://methodology`.
+Read it at the start of every session if you haven't already.
+
+## Session Start (every time)
+1. Run `daisy_switch_project` with name "{{SUBJECT_NAME}}"
+2. Read `notes/SESSION_STATE.md` — this is the checkpoint from the last session
+3. Run `daisy_report` for current fact counts and status
+4. **ASK THE USER:**
+   - "Is your VPN enabled?"
+   - "Is the 1Password extension disabled in Chrome?" (it interferes with Claude-in-Chrome — disable it before any browser automation)
+   Wait for explicit confirmation on both before ANY external search, fetch, or browser automation. Do not proceed with Discovery/Acquisition until confirmed.
+5. Pick up from the **Outstanding Questions** and **Unexplored Categories** in SESSION_STATE.md
+6. Ask the user what they want to focus on this session
+
+## First Time Only
+1. Run `daisy_new_project` with name "{{SUBJECT_NAME}}" and description "{{DESCRIPTION}}"
+2. Update the Project ID below
+3. Run `daisy_intake` with the subject name and any known details
+4. Follow Phase 0 in the methodology (authenticated sessions setup)
+
+## Project Info
+- **Project ID:** {{PROJECT_ID}}
+- **Daisy Root:** {{DAISY_ROOT}}
+- **Database:** postgresql://daisy:daisy_dev@localhost:5432/daisy
+- **Neo4j:** bolt://localhost:7687 (neo4j/daisy_dev)
+- **Neo4j Browser:** http://localhost:7474
+
+## Workspace
+- `notes/SESSION_STATE.md` — master checkpoint/dossier (UPDATE BEFORE ENDING SESSION)
+- `notes/<person-slug>.md` — per-person dossier files for related people
+- `notes/entities.md` — companies, organizations, properties
+- `downloads/` — PDFs, saved documents
+- `screenshots/` — browser captures
+- `reports/` — generated reports, graph HTML
+- `raw/` — API responses, data dumps
+
+## Storing Facts — daisy_add_fact
+- **claim_text**: human-readable description of the fact
+- **claim_type**: employment, education, location, account, relationship, credential, legal, other
+- **metadata**: JSONB — ALWAYS store ALL structured fields returned by any tool/source alongside the fact. Never discard data. Examples:
+  - Breach data: `{"email": "<email>", "breach": "<breach_name>", "breach_date": "<yyyy-mm>", "password": "<password>", "fields": ["email","password"]}`
+  - Account details: `{"platform": "<platform>", "handle": "<handle>", "followers": <n>, "private": true}`
+  - Phone records: `{"phone": "<phone>", "carrier": "<carrier>", "type": "wireless"}`
+  - People search result: `{"source": "<source>", "dob": "<yyyy-mm>", "address": "<street>", "city": "<city>", "state": "<state>", "zip": "<zip>", "phone": "<phone>", "relatives": ["<relative>"]}`
+  - Any key/value pairs returned by LeakCheck, ThatsThem, Radaris, or any other source
+
+### CRITICAL: Storing results from ANY source
+For EVERY source — LeakCheck, TruePeopleSearch, Radaris, Spokeo, LinkedIn, court records, property records, phone lookups, ANYTHING — follow these rules:
+1. One discrete record = one fact. Never collapse multiple records into one fact.
+2. Store EVERY field returned in `metadata`. Never discard data.
+3. `claim_text` is a human-readable summary. `metadata` is the complete raw record.
+
+```
+# Breach record (LeakCheck)
+claim_text: "<email> found in <breach_name> breach (<year>)"
+claim_type: credential
+metadata: {"source": "LeakCheck", "email": "<email>", "breach": "<breach_name>", "breach_date": "<yyyy-mm>", "password": "<password>"}
+
+# People search record (TruePeopleSearch)
+claim_text: "<subject> at <street>, <city> <state>"
+claim_type: location
+metadata: {"source": "<source>", "full_name": "<full_name>", "dob": "<yyyy-mm>", "address": "<street>", "city": "<city>", "state": "<state>", "zip": "<zip>", "phone": "<phone>", "relatives": ["<relative>"]}
+
+# Court record
+claim_text: "<subject> named as defendant in case <case_number>"
+claim_type: legal
+metadata: {"source": "<court>", "case_number": "<case_number>", "case_type": "civil", "role": "defendant", "filed": "<yyyy-mm-dd>", "status": "closed"}
+
+# Property record
+claim_text: "<subject> owns <street>, <city> <state>"
+claim_type: location
+metadata: {"source": "<assessor>", "apn": "<apn>", "owners": ["<owner>"], "purchase_price": <amount>, "purchase_date": "<yyyy-mm-dd>", "assessed_value": <amount>}
+```
+
+## Research Phases
+1. **Intake** — seed subject info, generate search queries
+2. **Discovery** — systematic search across all categories (see checklist below)
+3. **Fetch** — run `daisy_fetch` on all promising URLs (bulk, unauthenticated)
+4. **Status check** — call `daisy_fetch_summary` and show the user the report.
+   Present what succeeded, what hit auth walls (grouped by site), and what errored.
+   **Ask the user**: "How would you like to handle these? I can skip LinkedIn, use
+   Chrome for Facebook only, retry errors, etc. — your call."
+   Wait for their direction before proceeding.
+5. **Acquisition** — based on user's direction: use Claude-in-Chrome for approved
+   auth-walled sites, retry transient errors, skip what the user said to skip
+6. **Extraction** — extract facts from all fetched content
+7. **Review** — confirm/discard facts with user
+8. **Graph** — rebuild Neo4j graph, generate visualization
+9. **Analyze** — identify gaps, recommend next steps
+10. **Checkpoint** — update SESSION_STATE.md before ending
+
+## Search Categories Checklist
+Use this to track what's been searched. Check off as you go.
+
+### Social Profiles
+- [ ] LinkedIn
+- [ ] Facebook
+- [ ] Instagram
+- [ ] Twitter/X
+- [ ] GitHub
+- [ ] YouTube
+- [ ] TikTok
+- [ ] Reddit
+- [ ] Strava (GPS routes leak home address + routine)
+- [ ] Discord (community/interest mapping)
+- [ ] Nextdoor (neighborhood-level, user has verified account)
+- [ ] Personal website/blog
+
+### Employment & Professional
+- [ ] Company websites
+- [ ] Crunchbase
+- [ ] ZoomInfo
+- [ ] Press releases / news articles
+- [ ] Industry publications
+
+### Public Records
+- [ ] Property tax records (county assessor)
+- [ ] Voter registration (state election board)
+- [ ] Marriage/divorce records (county clerk)
+- [ ] Court records (state judiciary)
+- [ ] Business entity filings (state SOS)
+- [ ] OpenCorporates (global company filings, director history — free)
+- [ ] OpenSanctions (PEP/sanctions screening — free)
+- [ ] UCC filings, liens, judgments
+- [ ] Obituaries (family connections)
+- [ ] Political donations (FEC)
+- [ ] Professional licenses
+
+### People Search Aggregators
+- [ ] Spokeo
+- [ ] BeenVerified
+- [ ] TruePeopleSearch
+- [ ] ThatsThem (reverse email/phone/address — free, no account)
+- [ ] ZabaSearch (free people search — no account)
+- [ ] ClustrMaps
+- [ ] WhitePages
+- [ ] Radaris
+- [ ] Socialcatfish [paid - $0.99+/search]
+
+### Username Enumeration
+- [ ] WhatsMyName.app (500+ platforms — free, no account)
+- [ ] Epieos.com (email → linked accounts on 140+ services) [paid - $0.99/search]
+
+### Breach / Data Leak
+- [ ] Have I Been Pwned (haveibeenpwned.com — free, no account)
+- [ ] LeakCheck.io (use scripts/leakcheck.sh — key in ~/.secrets/api_keys.sh)
+- [ ] Dehashed [paid - $0.02/query]
+
+### Reverse Image
+- [ ] Google Lens / Yandex Images (free)
+- [ ] TinEye (free)
+- [ ] PimEyes (facial recognition) [paid - free shows count only]
+
+### Real Estate
+- [ ] Zillow / Redfin / Trulia
+- [ ] County tax portals
+- [ ] Deed transfer records (county clerk)
+
+## Browser Automation
+
+### Claude-in-Chrome (primary for auth-walled pages)
+Use for reading profiles on LinkedIn, Facebook, Instagram, and any site where
+Chrome is already logged in. Calls directly from the main agent — no subagent needed.
+- Invoke the `/claude-in-chrome` skill at session start to load the tools
+- Call `mcp__claude-in-chrome__tabs_context_mcp` first to get tab context
+- Use `mcp__claude-in-chrome__navigate` to go to the URL
+- Use `mcp__claude-in-chrome__read_page` or `mcp__claude-in-chrome__javascript_tool` to extract content
+- Use `mcp__claude-in-chrome__computer` with `screenshot` to visually inspect the page
+- Prefer `read_page` / `javascript_tool` over screenshots — text extraction is cheaper and more reliable
+
+### Tethernet (SPA / XHR network capture)
+Reserve for pages where content loads via API calls not visible in the DOM.
+- **CRITICAL: NEVER call mcp__tethernet__* tools directly from the main agent.**
+  Always delegate to the `tethernet` subagent with full context.
+- Network capture requires F12 (DevTools) open on the tab for response bodies.
+- Response bodies truncated at 4KB.
+- Also use when you need to guide the user through interactive clicks step-by-step.
+
+### AXMCP (Safari — form-based public records portals)
+- No extension needed. Works via macOS accessibility + AppleScript.
+- **CRITICAL: NEVER call mcp__axmcp__* tools directly from the main agent.**
+  Always delegate via the Agent tool.
+- Call `ax_get_instructions` first. Use `ax_run_applescript` with `do JavaScript`
+  for form fills and result extraction.
+
+### When to use which
+| Scenario | Use |
+|---|---|
+| Auth-walled profile (LinkedIn, Facebook, Instagram) | Claude-in-Chrome |
+| Open web page or simple public records portal | daisy_fetch |
+| SPA where data loads via XHR/fetch calls | Tethernet (network capture) |
+| Complex form-based portal (court records, property search) | AXMCP (Safari) |
+| Need to guide user through interactive clicks | Tethernet (screenshot + guide) |
+
+## Generating a Report
+When the user says "generate a report" or "create a report":
+
+1. Call `daisy_report` to get all facts and their attributes
+2. Call `daisy_facts` with no filters to get the full fact list including metadata
+3. Read `notes/SESSION_STATE.md` for the compiled dossier
+4. Write a Quarto report to `reports/{{SUBJECT_SLUG}}-report.qmd`:
+   - Use the template at `{{DAISY_ROOT}}/templates/report.qmd.template` as the base
+   - Populate EVERY section with data from facts + SESSION_STATE.md
+   - For credentials: include every breach record with all fields (email, breach, date, password, fields exposed)
+   - For facts with `attributes`: surface all key/value pairs in the relevant table
+   - Do NOT leave any section empty if data exists — populate it
+5. Render: `cd {{DAISY_ROOT}} && quarto render projects/{{SUBJECT_SLUG}}/reports/{{SUBJECT_SLUG}}-report.qmd`
+6. Tell the user the report is at `reports/{{SUBJECT_SLUG}}-report.qmd` and `reports/{{SUBJECT_SLUG}}-report.html`
+
+The report is the authoritative compiled output. It should read as a professional intelligence brief — not a raw data dump.
+
+## Graph & Visualization
+
+### How the graph pipeline works
+The graph is built from confirmed/likely facts in Postgres and
+projected into Neo4j. Three AI-powered stages:
+
+1. **Entity extraction** (LLM) — each fact's claim text is sent to
+   Ollama (qwen3:8b on beefybox) which returns structured JSON:
+   persons, companies, schools, locations, properties, accounts,
+   relationships. Results are cached in `entity_cache.json` —
+   subsequent rebuilds skip the LLM calls.
+
+2. **Cross-connections** (rule-based, project-scoped) — inferred
+   edges between entities: colleagues at same company, family
+   clusters by shared surname, career timeline by year extraction,
+   property owners located at property location, school at location.
+
+3. **Validation & Dedup** (LLM + rules, project-scoped):
+   - Remove garbage nodes (job titles parsed as people, fragments)
+   - Normalize names (strip prefixes like "Wife", "Mother")
+   - **LLM-powered deduplication** — for EVERY node type (Person,
+     Company, Location, School, Property, Account), send all names
+     to the LLM which groups duplicates:
+     "100 Example St, Apt D" + "100 Example Street, Apt D" → merged
+     "The Venue" + "The Venue Bar" → merged
+     "First" + "First Last1" + "First Middle Last1" → merged
+   - Flag contradictions (property in multiple municipalities)
+   - Remove orphan nodes
+   - ALL operations scoped to the active project — no cross-project
+     contamination
+
+4. **HTML generation** — project-scoped vis.js graph:
+   `uv run python scripts/gen_graph_html.py "{{SUBJECT_NAME}}"`
+   Output: `reports/graph.html`
+
+### Graph commands
+- `daisy_build_graph` — rebuild Neo4j graph (runs all 3 stages)
+- `uv run python scripts/gen_graph_html.py "{{SUBJECT_NAME}}"` —
+  generate interactive HTML (run from {{DAISY_ROOT}})
+- View HTML: open `reports/graph.html` in browser
+- View raw graph: Neo4j Browser at http://localhost:7474
+
+### Graph requirements
+- **Ollama must be running** on beefybox (or locally) for entity
+  extraction and deduplication. Without it, facts are stored in
+  Postgres but not mapped to the graph.
+- **Neo4j must be running**: `docker compose up -d` from {{DAISY_ROOT}}
+- **Entity cache**: stored at `entity_cache.json` in the project
+  workspace. Delete it to force re-extraction from the LLM.
+
+### Graph quality checklist
+After every graph rebuild, verify:
+- [ ] No disconnected clusters that should be connected
+- [ ] No duplicate nodes (same entity, different spelling)
+- [ ] Properties link to exactly one municipality
+- [ ] Related people (spouse, family) have their own edges
+  (employment, education, accounts) — not just a link to the subject
+- [ ] Career timeline flows correctly (NEXT_ROLE arrows)
+- [ ] Family clusters connect to the subject via relationship edges
+
+If something looks wrong, check the entity cache (`entity_cache.json`)
+for that fact's extraction output. Delete the cache entry and rebuild
+to re-extract.
+
+## Fact Quality Rules
+- Each fact should be a single, specific claim
+- Do NOT create compound facts ("X works at Y and lives in Z")
+- Facts about related people (spouse, parent) are stored on the
+  subject's subject_id but the graph builder creates nodes/edges
+  for the related person too
+- Confirm facts in batches after each research phase — don't let
+  unconfirmed facts pile up
+- Discard facts about the wrong person immediately
+- Cross-reference: if 2+ sources confirm the same claim, confidence = 1.0
+
+## Infrastructure Requirements
+- **Postgres + Redis + Neo4j**: `docker compose up -d` from {{DAISY_ROOT}}
+- **Ollama on beefybox**: `http://beefybox:11434` with `qwen3:8b`
+  (configured in {{DAISY_ROOT}}/.env as OLLAMA_URL and OLLAMA_EXTRACTION_MODEL)
+- **Brave Search API**: for web discovery (key in .env)
+
+## Commands (run from {{DAISY_ROOT}})
+- `uv run daisy-mcp` — start MCP server (usually auto-started by CC)
+- `uv run python scripts/gen_graph_html.py "{{SUBJECT_NAME}}"` —
+  regenerate graph HTML for this project
+- `docker compose up -d` — start Postgres + Redis + Neo4j
+- `./scripts/new_search.sh "Name" "description"` — create a new search
+
+## OSINT Scripts
+- `scripts/leakcheck.sh <email|phone|username> ...` — LeakCheck.io breach database lookup
+  - Reads `LEAKCHECK_API_KEY` from `~/.secrets/api_keys.sh`
+  - Run: `source ~/.secrets/api_keys.sh && scripts/leakcheck.sh "<email>"`
+  - Supports: email, phone (digits only, no +1), username
+  - Returns: breach sources, exposed fields, plaintext passwords, PII (NPD has SSN/address history)
+  - Multiple queries: `scripts/leakcheck.sh "<email>" "<email>" "<phone>"`

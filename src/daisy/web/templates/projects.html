@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Projects - Daisy Search{% endblock %}
+
+{% block content %}
+<h2>Projects</h2>
+
+{% if projects %}
+<table class="projects-table" role="grid">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Subjects</th>
+            <th>Facts</th>
+            <th>Created</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for project in projects %}
+        <tr style="cursor: pointer"
+            onclick="window.location.href='/projects/{{ project.id }}'">
+            <td><strong>{{ project.name }}</strong></td>
+            <td><span class="badge badge-{{ project.status }}">{{ project.status }}</span></td>
+            <td>{{ project.subject_count }}</td>
+            <td>{{ project.fact_count }}</td>
+            <td>{{ project.created_at | format_date }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No projects yet. Create one via MCP tools in Claude Code or Claude Desktop.</p>
+{% endif %}
+{% endblock %}

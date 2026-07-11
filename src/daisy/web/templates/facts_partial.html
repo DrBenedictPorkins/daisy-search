@@ -1,0 +1,161 @@
+<!-- Filter bar -->
+<form class="filter-form"
+      hx-get="/projects/{{ project_id }}/facts"
+      hx-target="#tab-content"
+      hx-swap="innerHTML">
+    <div class="filter-group">
+        <label for="claim_type">Type</label>
+        <select name="claim_type" id="claim_type">
+            <option value="">All types</option>
+            {% for ct in claim_types %}
+            <option value="{{ ct }}" {% if filters.claim_type == ct %}selected{% endif %}>{{ ct }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-group">
+        <label for="lifecycle_state">State</label>
+        <select name="lifecycle_state" id="lifecycle_state">
+            <option value="">All states</option>
+            {% for ls in lifecycle_states %}
+            <option value="{{ ls }}" {% if filters.lifecycle_state == ls %}selected{% endif %}>{{ ls }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-group">
+        <label for="min_confidence">Min %</label>
+        <input type="number" name="min_confidence" id="min_confidence"
+               min="0" max="100" step="5"
+               value="{{ filters.min_confidence if filters.min_confidence is not none else '' }}"
+               placeholder="0" style="width: 70px;">
+    </div>
+    {% if filters.subject_id %}
+    <input type="hidden" name="subject_id" value="{{ filters.subject_id }}">
+    {% endif %}
+    <div class="filter-group">
+        <label>&nbsp;</label>
+        <button type="submit" class="filter-btn">Filter</button>
+    </div>
+    {% if filters.subject_id %}
+    <div class="filter-group">
+        <label>&nbsp;</label>
+        <a href="#"
+           hx-get="/projects/{{ project_id }}/facts"
+           hx-target="#tab-content"
+           hx-swap="innerHTML"
+           style="font-size: 0.85em; align-self: center;">Clear subject</a>
+    </div>
+    {% endif %}
+</form>
+
+{% if not facts %}
+<p style="color: var(--pico-muted-color);">No facts match the current filters.</p>
+
+{% else %}
+
+{# ── CONFIRMED ─────────────────────────────────────────────── #}
+{% if confirmed_groups %}
+<div class="facts-section">
+    <h3 class="facts-section-heading facts-heading-confirmed">
+        Confirmed
+        <span class="facts-count-badge">{{ confirmed_groups | sum(attribute='1') | length if false else (confirmed_groups | map(attribute='1') | map('length') | sum) }} facts</span>
+    </h3>
+
+    {% for type_name, type_facts in confirmed_groups %}
+    <div class="fact-type-group">
+        <div class="fact-type-label">{{ type_name | title }}</div>
+        {% for fact in type_facts %}
+        <div class="fact-card fact-card-confirmed">
+            <div class="fact-card-text">{{ fact.claim_text }}</div>
+            <div class="fact-card-meta">
+                {% if fact.event_date %}<span>{{ fact.event_date | format_date }}</span> &middot; {% endif %}
+                <a href="{{ fact.source_url }}" target="_blank" rel="noopener" class="truncate-url">{{ fact.source_url | truncate_url }}</a>
+                <a class="fact-filter-link"
+                   hx-get="/projects/{{ project_id }}/facts?claim_type={{ fact.claim_type }}&lifecycle_state=confirmed"
+                   hx-target="#tab-content"
+                   hx-swap="innerHTML">all {{ fact.claim_type }}</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{# ── LIKELY ────────────────────────────────────────────────── #}
+{% if likely_groups %}
+<details class="facts-section facts-collapsible">
+    <summary class="facts-section-heading facts-heading-likely">
+        Likely
+        <span class="facts-count-badge">{{ likely_groups | map(attribute='1') | map('length') | sum }} facts</span>
+    </summary>
+
+    {% for type_name, type_facts in likely_groups %}
+    <div class="fact-type-group">
+        <div class="fact-type-label">{{ type_name | title }}</div>
+        {% for fact in type_facts %}
+        <div class="fact-card fact-card-likely">
+            <div class="fact-card-text">{{ fact.claim_text }}</div>
+            <div class="fact-card-meta">
+                <span class="fact-confidence">{{ (fact.local_confidence * 100) | int }}%</span>
+                {% if fact.event_date %}&middot; <span>{{ fact.event_date | format_date }}</span>{% endif %}
+                &middot; <a href="{{ fact.source_url }}" target="_blank" rel="noopener" class="truncate-url">{{ fact.source_url | truncate_url }}</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</details>
+{% endif %}
+
+{# ── OTHER STATES ──────────────────────────────────────────── #}
+{% if other_facts %}
+<details class="facts-section facts-collapsible">
+    <summary class="facts-section-heading facts-heading-other">
+        Other
+        <span class="facts-count-badge">{{ other_facts | length }} facts</span>
+        <span style="font-size: 0.8em; font-weight: 400; color: var(--pico-muted-color);">(unconfirmed, needs revalidation, discarded)</span>
+    </summary>
+
+    {% for fact in other_facts %}
+    <div class="fact-card fact-card-other">
+        <div style="display: flex; gap: 0.5em; align-items: center; margin-bottom: 0.3em;">
+            <span class="badge badge-{{ fact.lifecycle_state }}">{{ fact.lifecycle_state }}</span>
+            <span class="badge badge-claim">{{ fact.claim_type }}</span>
+            <span class="fact-confidence">{{ (fact.local_confidence * 100) | int }}%</span>
+        </div>
+        <div class="fact-card-text">{{ fact.claim_text }}</div>
+        <div class="fact-card-meta">
+            <a href="{{ fact.source_url }}" target="_blank" rel="noopener" class="truncate-url">{{ fact.source_url | truncate_url }}</a>
+        </div>
+    </div>
+    {% endfor %}
+</details>
+{% endif %}
+
+{# ── POSSIBLY RELATED ─────────────────────────────────────── #}
+{% if possibly_related %}
+<details class="facts-section facts-collapsible">
+    <summary class="facts-section-heading facts-heading-other">
+        Possibly Related
+        <span class="facts-count-badge">{{ possibly_related | length }} item{{ "s" if possibly_related | length != 1 else "" }}</span>
+        <span style="font-size: 0.8em; font-weight: 400; color: var(--pico-muted-color);">(associates, family, connections)</span>
+    </summary>
+
+    {% for fact in possibly_related %}
+    <div class="fact-card fact-card-other">
+        <div style="display: flex; gap: 0.5em; align-items: center; margin-bottom: 0.3em;">
+            <span class="badge badge-{{ fact.lifecycle_state }}">{{ fact.lifecycle_state }}</span>
+            <span class="fact-confidence">{{ (fact.local_confidence * 100) | int }}%</span>
+        </div>
+        <div class="fact-card-text">{{ fact.claim_text }}</div>
+        <div class="fact-card-meta">
+            <a href="{{ fact.source_url }}" target="_blank" rel="noopener" class="truncate-url">{{ fact.source_url | truncate_url }}</a>
+        </div>
+    </div>
+    {% endfor %}
+</details>
+{% endif %}
+
+<p style="margin-top: 1em;"><small style="color: var(--pico-muted-color);">{{ facts | length }} total fact{{ "s" if facts | length != 1 else "" }}</small></p>
+
+{% endif %}

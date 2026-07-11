@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Daisy Search{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body>
+    <header class="container">
+        <nav>
+            <ul>
+                <li><strong><a href="/projects">Daisy Search</a></strong></li>
+            </ul>
+            <ul>
+                <li>
+                    {% if projects_nav is defined and projects_nav %}
+                    <select id="project-selector"
+                            onchange="if(this.value) window.location.href='/projects/' + this.value">
+                        <option value="">-- Select project --</option>
+                        {% for p in projects_nav %}
+                        <option value="{{ p.id }}"
+                                {% if current_project_id is defined and p.id == current_project_id %}selected{% endif %}>
+                            {{ p.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="container">
+        <small>Daisy Search v{{ version }}</small>
+    </footer>
+</body>
+</html>

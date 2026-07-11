@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+wheels/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Environment variables
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Alembic
+migrations/versions/*.pyc
+
+# Research project workspaces (contain investigation data)
+projects/
+
+# Investigation workspaces (contain research data)
+searches/
+
+# Live case handoffs / methodology notes (contain investigation PII)
+HANDOFF.md
+I-COMPLY.md
+tethernet-investigation-prompt.md

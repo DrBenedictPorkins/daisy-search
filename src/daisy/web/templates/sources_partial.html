@@ -1,0 +1,20 @@
+{% if sources %}
+<div>
+    {% for item in sources %}
+    <div class="source-item">
+        <div>
+            <a href="{{ item.source.url }}" target="_blank" rel="noopener" class="truncate-url">{{ item.source.url | truncate_url }}</a>
+        </div>
+        <div class="fact-meta">
+            <span class="badge badge-claim">{{ item.source.content_type }}</span>
+            &middot; HTTP {{ item.source.http_status }}
+            &middot; {{ item.size | filesizeformat }}
+            &middot; Fetched {{ item.source.fetch_date | format_date }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<p><small>{{ sources | length }} source{{ "s" if sources | length != 1 else "" }}</small></p>
+{% else %}
+<p>No sources found for this project.</p>
+{% endif %}
