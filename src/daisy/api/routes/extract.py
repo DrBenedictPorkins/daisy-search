@@ -1,4 +1,7 @@
-"""Generic HTML extraction endpoint — receives raw HTML, returns clean markdown via trafilatura."""
+"""Generic HTML extraction endpoint.
+
+Receives raw HTML, returns clean markdown via trafilatura.
+"""
 
 import trafilatura
 from fastapi import APIRouter, HTTPException

@@ -2,7 +2,7 @@
   "mcpServers": {
     "daisy-search": {
       "command": "uv",
-      "args": ["run", "--directory", "/Users/makram/dev/daisy-search", "daisy-mcp"]
+      "args": ["run", "--directory", ".", "daisy-mcp"]
     }
   }
 }

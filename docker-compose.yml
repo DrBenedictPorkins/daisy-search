@@ -46,7 +46,7 @@ services:
     environment:
       - CRAWL4AI_API_TOKEN=daisy-c4ai-token
       - CRAWL4AI_EXECUTE_JS_ENABLED=true
-      - OLLAMA_BASE_URL=http://beefybox:11434
+      - OLLAMA_BASE_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
     shm_size: '2gb'
 
 volumes:

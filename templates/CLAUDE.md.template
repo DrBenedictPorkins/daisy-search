@@ -235,7 +235,7 @@ The graph is built from confirmed/likely facts in Postgres and
 projected into Neo4j. Three AI-powered stages:
 
 1. **Entity extraction** (LLM) — each fact's claim text is sent to
-   Ollama (qwen3:8b on beefybox) which returns structured JSON:
+   Ollama (qwen3:8b) which returns structured JSON:
    persons, companies, schools, locations, properties, accounts,
    relationships. Results are cached in `entity_cache.json` —
    subsequent rebuilds skip the LLM calls.
@@ -271,7 +271,7 @@ projected into Neo4j. Three AI-powered stages:
 - View raw graph: Neo4j Browser at http://localhost:7474
 
 ### Graph requirements
-- **Ollama must be running** on beefybox (or locally) for entity
+- **Ollama must be running** (locally or on a reachable host) for entity
   extraction and deduplication. Without it, facts are stored in
   Postgres but not mapped to the graph.
 - **Neo4j must be running**: `docker compose up -d` from {{DAISY_ROOT}}
@@ -305,7 +305,7 @@ to re-extract.
 
 ## Infrastructure Requirements
 - **Postgres + Redis + Neo4j**: `docker compose up -d` from {{DAISY_ROOT}}
-- **Ollama on beefybox**: `http://beefybox:11434` with `qwen3:8b`
+- **Ollama**: `http://localhost:11434` with `qwen3:8b`
   (configured in {{DAISY_ROOT}}/.env as OLLAMA_URL and OLLAMA_EXTRACTION_MODEL)
 - **Brave Search API**: for web discovery (key in .env)
 

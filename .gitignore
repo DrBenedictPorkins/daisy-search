@@ -45,3 +45,10 @@ searches/
 HANDOFF.md
 I-COMPLY.md
 tethernet-investigation-prompt.md
+
+# Local Claude Code state
+.claude/settings.local.json
+.cc_checkpoint
+
+# Personal deploy helper (private S3 bucket / CloudFront distribution)
+scripts/aws-push.sh

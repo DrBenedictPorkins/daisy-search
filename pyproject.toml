@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Personal identity exposure and OSINT research system"
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.34.0",
@@ -36,9 +38,16 @@ packages = ["src/daisy"]
 [tool.ruff]
 target-version = "py311"
 src = ["src"]
+# Alembic-generated revision files follow Alembic's own template.
+exclude = ["migrations/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# Standalone report/HTML generators: dominated by embedded CSS/HTML string
+# literals that are less readable when wrapped.
+"scripts/*.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

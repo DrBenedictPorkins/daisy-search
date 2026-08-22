@@ -204,7 +204,10 @@ TOOLS = [
                 "description": "Date in YYYY-MM-DD if known",
             },
             "raw_snippet": {"type": "string", "description": "Supporting text snippet"},
-            "metadata": {"type": "object", "description": "Optional arbitrary metadata"},
+            "metadata": {
+                "type": "object",
+                "description": "Optional arbitrary metadata",
+            },
         },
         required=["subject_id", "claim_text", "claim_type"],
     ),
@@ -275,7 +278,9 @@ TOOLS = [
         {
             "outcome": {
                 "type": "string",
-                "description": "Filter by outcome: fetched, auth_wall, error, duplicate",
+                "description": (
+                    "Filter by outcome: fetched, auth_wall, error, duplicate"
+                ),
             },
             "limit": {"type": "integer", "description": "Max results (default 50)"},
         },
@@ -745,7 +750,11 @@ async def _handle_fetch(args: dict) -> str:
             http_status=status, auth_wall_reason=reason,
             recommended_tool=tool, permanent=permanent,
         )
-        permanence = "PERMANENT — retry will not help" if permanent else "POSSIBLY TEMPORARY — retry may work"
+        permanence = (
+            "PERMANENT — retry will not help"
+            if permanent
+            else "POSSIBLY TEMPORARY — retry may work"
+        )
         next_steps = {
             "Claude-in-Chrome": (
                 "1. Load Claude-in-Chrome tools via ToolSearch\n"
@@ -756,7 +765,8 @@ async def _handle_fetch(args: dict) -> str:
             ),
             "retry daisy_fetch": (
                 "Call daisy_fetch with the same URL again — nothing was stored so\n"
-                "there is no duplicate conflict. If it fails again, use Claude-in-Chrome."
+                "there is no duplicate conflict. If it fails again, use "
+                "Claude-in-Chrome."
             ),
             "retry daisy_fetch after a short wait": (
                 "Wait ~30 seconds then call daisy_fetch with the same URL again.\n"
@@ -1430,16 +1440,16 @@ async def _handle_fetch_clean(args: dict) -> str:
 
 # (domain fragment, reason, recommended_tool, permanent)
 _AUTH_WALL_DOMAINS: list[tuple[str, str, str, bool]] = [
-    ("linkedin.com",              "LinkedIn requires login",    "Claude-in-Chrome", True),
-    ("facebook.com",              "Facebook requires login",    "Claude-in-Chrome", True),
-    ("instagram.com",             "Instagram requires login",   "Claude-in-Chrome", True),
-    ("nextdoor.com",              "Nextdoor requires login",    "Claude-in-Chrome", True),
-    ("twitter.com",               "Twitter/X requires login",   "Claude-in-Chrome", True),
-    ("x.com",                     "Twitter/X requires login",   "Claude-in-Chrome", True),
-    ("glassdoor.com",             "Glassdoor requires login",   "Claude-in-Chrome", True),
-    ("reddit.com",                "Reddit age/login gate",      "Claude-in-Chrome", True),
-    ("login.microsoftonline.com", "Microsoft SSO redirect",     "Claude-in-Chrome", True),
-    ("accounts.google.com",       "Google SSO redirect",        "Claude-in-Chrome", True),
+    ("linkedin.com",              "LinkedIn requires login",  "Claude-in-Chrome", True),
+    ("facebook.com",              "Facebook requires login",  "Claude-in-Chrome", True),
+    ("instagram.com",             "Instagram requires login", "Claude-in-Chrome", True),
+    ("nextdoor.com",              "Nextdoor requires login",  "Claude-in-Chrome", True),
+    ("twitter.com",               "Twitter/X requires login", "Claude-in-Chrome", True),
+    ("x.com",                     "Twitter/X requires login", "Claude-in-Chrome", True),
+    ("glassdoor.com",             "Glassdoor requires login", "Claude-in-Chrome", True),
+    ("reddit.com",                "Reddit age/login gate",    "Claude-in-Chrome", True),
+    ("login.microsoftonline.com", "Microsoft SSO redirect",   "Claude-in-Chrome", True),
+    ("accounts.google.com",       "Google SSO redirect",      "Claude-in-Chrome", True),
 ]
 
 _AUTH_WALL_URL_PATTERNS: list[tuple[str, str, bool]] = [
@@ -1484,7 +1494,11 @@ def _detect_auth_wall(
     url_lower = final_url.lower()
 
     if status == 429:
-        return ("HTTP 429 — rate limited", "retry daisy_fetch after a short wait", False)
+        return (
+            "HTTP 429 — rate limited",
+            "retry daisy_fetch after a short wait",
+            False,
+        )
 
     # Known auth-walled domains (most specific)
     for domain, reason, tool, permanent in _AUTH_WALL_DOMAINS:

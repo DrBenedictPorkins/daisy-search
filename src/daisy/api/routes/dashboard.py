@@ -208,7 +208,11 @@ async def project_facts(
 
     confirmed = [f for f in facts if f.lifecycle_state == "confirmed" and is_subject(f)]
     likely = [f for f in facts if f.lifecycle_state == "likely" and is_subject(f)]
-    other = [f for f in facts if f.lifecycle_state not in ("confirmed", "likely") and is_subject(f)]
+    other = [
+        f
+        for f in facts
+        if f.lifecycle_state not in ("confirmed", "likely") and is_subject(f)
+    ]
     possibly_related = [f for f in facts if is_related(f)]
 
     return templates.TemplateResponse(
