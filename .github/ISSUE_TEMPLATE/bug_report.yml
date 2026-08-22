@@ -1,0 +1,45 @@
+name: Bug report
+description: Something in Daisy behaves incorrectly
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not paste real investigation data.** Redact or replace subject details with
+        synthetic placeholders (`example.com`, `555-0142`, invented names and places).
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Include the exact tool call or command, and the output.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: Client
+      placeholder: Claude Code / Claude Desktop / CLI / dashboard
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      placeholder: |
+        OS:
+        Python / uv version:
+        Which compose services are running:
+        Extraction backend (Ollama / Anthropic API / in-context):

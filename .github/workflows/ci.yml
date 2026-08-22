@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Sync dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Test
+        run: uv run pytest -q
+
+      - name: Alembic migrations are linear (single head)
+        run: |
+          heads=$(uv run alembic heads 2>/dev/null | grep -c '(head)' || true)
+          if [ "$heads" != "1" ]; then
+            echo "Expected exactly one Alembic head, found $heads"
+            uv run alembic heads
+            exit 1
+          fi
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard against investigation data and personal paths
+        run: |
+          set -e
+          # Case workspaces must never be committed — they hold real subject data.
+          if git ls-files | grep -Eq '^(projects|searches)/'; then
+            echo "::error::Investigation workspace files are tracked. They must stay git-ignored."
+            git ls-files | grep -E '^(projects|searches)/'
+            exit 1
+          fi
+          if git ls-files | grep -Eq '^(HANDOFF|I-COMPLY)\.md$|tethernet-investigation-prompt\.md$'; then
+            echo "::error::Live case notes are tracked. They must stay git-ignored."
+            exit 1
+          fi
+          if git ls-files -z | xargs -0 grep -lI '/Users/' 2>/dev/null | grep -v '^\.github/'; then
+            echo "::error::A local absolute path is committed."
+            exit 1
+          fi

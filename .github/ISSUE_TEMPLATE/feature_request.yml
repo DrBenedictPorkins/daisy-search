@@ -1,0 +1,38 @@
+name: Feature request
+description: Suggest a capability or improvement
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Daisy is **public-access OSINT only**. Requests that defeat authentication, evade
+        access controls, use recovered credentials, or support surveillance, stalking,
+        harassment, or identifying minors will be closed. See
+        [SECURITY.md](../../SECURITY.md).
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: If it's a new MCP tool, sketch its name, inputs, and what it returns.
+    validations:
+      required: true
+  - type: input
+    id: sources
+    attributes:
+      label: Data sources involved
+      description: Which public records, published sources, or aggregators does this rely on?
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This uses only public records, published reporting, or breach-aggregator data
+          required: true
+        - label: This does not bypass authentication or access controls
+          required: true
