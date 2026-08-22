@@ -14,6 +14,7 @@ everything across sessions in a shared Postgres brain.
 [![Neo4j](https://img.shields.io/badge/Neo4j-graph-4581C3?logo=neo4j&logoColor=white)](https://neo4j.com/)
 [![MCP](https://img.shields.io/badge/MCP-server-black)](https://modelcontextprotocol.io/)
 [![UV](https://img.shields.io/badge/UV-managed-DE5FE9)](https://docs.astral.sh/uv/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
 
@@ -32,7 +33,7 @@ messy OSINT trail honest.
         │   Claude Code / Desktop  (the investigator)   │
         │   plans · reasons · decides what to trust     │
         └───────────────────────┬──────────────────────┘
-                     MCP tools   │   (17 of them)
+                     MCP tools   │   (18 of them)
         ┌───────────────────────▼──────────────────────┐
         │            Daisy MCP Server (the lab)         │
         │  search · fetch · extract · fact · graph      │
@@ -84,6 +85,25 @@ people, employers, addresses, accounts, and exposures around the subject at a gl
 - **Identity graph.** Entities, addresses, employers, and accounts are de-duplicated and linked into a
   navigable Neo4j graph.
 
+## How it compares
+
+The agent-native OSINT space is getting crowded. Daisy's bet is different from most of it:
+the hard part isn't *collecting* more, it's knowing **what you actually saw** afterwards.
+
+| | Daisy | [OpenOSINT](https://github.com/OpenOSINT/OpenOSINT) | [SpiderFoot](https://github.com/smicallef/spiderfoot) | [BBOT](https://github.com/blacklanternsecurity/bbot) |
+|---|---|---|---|---|
+| Agent-native (MCP) | ✅ | ✅ | ❌ | ❌ |
+| State across sessions | ✅ Postgres | ❌ session files | ✅ scan DB | ✅ scan DB |
+| Immutable, sourced facts | ✅ | ❌ | ❌ | ❌ |
+| Explicit fact lifecycle | ✅ | ❌ | ❌ | ❌ |
+| Fetch audit (seen vs. assumed) | ✅ | ❌ | ❌ | ❌ |
+| Identity graph | ✅ Neo4j | partial | ❌ | ❌ |
+| Collection breadth | modest | ✅ 19 tools | ✅ 200+ modules | ✅ recursive |
+
+If you want maximum surface area on a target, OpenOSINT and SpiderFoot wrap far more collectors.
+Daisy is for the case where the finding has to hold up later — where "we never retrieved that page,
+it was behind a login" is a fact worth recording, not a gap to paper over.
+
 ## The fact lifecycle
 
 Every discovered claim is an immutable record that moves through states — it is never deleted or rewritten:
@@ -102,13 +122,18 @@ The agent works entirely through these MCP tools, all scoped to the active proje
 | Area | Tools |
 |------|-------|
 | **Projects** | `daisy_projects` · `daisy_new_project` · `daisy_switch_project` · `daisy_archive_project` |
-| **Discovery** | `daisy_intake` · `daisy_search` · `daisy_fetch` · `daisy_extract` |
+| **Discovery** | `daisy_intake` · `daisy_search` · `daisy_fetch` · `daisy_extract` · `daisy_fetch_clean`† |
 | **Fetch audit** | `daisy_fetch_log` · `daisy_fetch_summary` |
 | **Facts** | `daisy_add_fact` · `daisy_facts` · `daisy_confirm` · `daisy_sources` |
 | **Graph** | `daisy_build_graph` · `daisy_graph` |
 | **Output** | `daisy_report` |
 
+† `daisy_fetch_clean` is registered only when `CRAWL4AI_URL` is set.
+
 The methodology guide ships as an MCP resource at `daisy://methodology`, so the agent onboards itself.
+
+For a single lead you just want to size up, there's a **quick-scan** mode — no project, no database
+writes, results displayed and discarded. See [`QUICK_SCAN.md`](QUICK_SCAN.md).
 
 ## Quick start
 
@@ -121,7 +146,8 @@ docker compose up -d
 # 2. Install dependencies
 uv sync
 
-# 3. Configure and migrate
+# 3. Configure and migrate (defaults match the compose stack;
+#    set at least one search backend or discovery returns nothing)
 cp .env.example .env
 uv run alembic upgrade head
 
@@ -150,8 +176,8 @@ Then register the server with your Claude client and say: *"Start a new search f
 ## Development
 
 ```bash
-uv run pytest                 # tests
-uv run ruff check src/        # lint
+uv run ruff check .           # lint (Alembic revision files excluded)
+uv run pytest                 # tests (tool registry, auth-wall detection, lifecycle constants)
 uv run alembic revision --autogenerate -m "…"   # new migration
 docker exec -it daisy-postgres psql -U daisy -d daisy   # DB shell
 ```
@@ -164,10 +190,13 @@ src/daisy/
 ├── constants.py      # enums, magic strings, defaults
 ├── config.py         # pydantic-settings (env-driven)
 ├── graph.py          # identity graph construction
-├── models/           # SQLAlchemy ORM (project · subject · fact · source · …)
+├── models/           # SQLAlchemy ORM (project · subject · fact · source · fetch_attempt · …)
 ├── api/              # read-only FastAPI dashboard
 └── web/              # templates & static assets
 migrations/           # Alembic
+templates/            # per-case workspace scaffolding
+scripts/              # LeakCheck lookup, report + graph generators, workspace bootstrap
+projects/  searches/  # per-case workspaces — git-ignored, hold investigation data
 ```
 
 ## Responsible use
@@ -175,5 +204,20 @@ migrations/           # Alembic
 Daisy is built for **legitimate, authorized work** — auditing your own footprint, consented
 research, journalism, and security work — using only **public records, published reporting, and
 breach-aggregator data.** It does not defeat authentication, evade access controls, or use recovered
-credentials, and it is not for surveillance, stalking, or harassment. You are responsible for
-complying with all applicable laws and platform terms in your jurisdiction.
+credentials, and it is not for surveillance, stalking, or harassment. An auth wall is a stopping
+point, recorded as `auth_wall` in the fetch log — not an obstacle to route around. You are
+responsible for complying with all applicable laws and platform terms in your jurisdiction.
+
+The full scope boundary, including what counts as a security issue in a tool that handles other
+people's data, is in [SECURITY.md](SECURITY.md).
+
+## Contributing
+
+Setup, conventions, and the rules that keep the audit trail honest are in
+[CONTRIBUTING.md](CONTRIBUTING.md). Run `uv run ruff check .` and `uv run pytest -q` before
+opening a PR — CI runs both, plus a guard that fails if investigation data or a local absolute
+path is ever committed.
+
+## License
+
+[MIT](LICENSE).
