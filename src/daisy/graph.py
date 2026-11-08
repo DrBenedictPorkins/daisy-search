@@ -29,7 +29,12 @@ import httpx
 from neo4j import GraphDatabase
 
 from daisy.config import settings
-from daisy.constants import ClaimType, LifecycleState
+from daisy.constants import (
+    DEFAULT_LLM_EFFORT,
+    DEFAULT_LLM_MAX_TOKENS,
+    ClaimType,
+    LifecycleState,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -269,7 +274,8 @@ async def _extract_via_anthropic(
     }
     payload = {
         "model": settings.extraction_model,
-        "max_tokens": 1024,
+        "max_tokens": DEFAULT_LLM_MAX_TOKENS,
+        "output_config": {"effort": DEFAULT_LLM_EFFORT},
         "system": _EXTRACTION_SYSTEM_PROMPT,
         "messages": [
             {
@@ -287,7 +293,18 @@ async def _extract_via_anthropic(
             )
             resp.raise_for_status()
             data = resp.json()
-            text = data["content"][0]["text"]
+            if data.get("stop_reason") == "refusal":
+                logger.warning(
+                    "Anthropic extraction refused: %s",
+                    data.get("stop_details"),
+                )
+                return {}
+            # Responses can open with a thinking block; read by type.
+            text = next(
+                (b["text"] for b in data["content"]
+                 if b.get("type") == "text"),
+                "",
+            )
             return _parse_llm_json(text)
     except Exception:
         logger.exception("Anthropic extraction failed")

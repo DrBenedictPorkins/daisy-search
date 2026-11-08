@@ -36,7 +36,7 @@ gets committed.
 - **Async DB access** via asyncpg. Alembic runs sync (psycopg2).
 - **Schema changes need a migration**: `uv run alembic revision --autogenerate -m "..."`.
   Keep the history linear — one head.
-- **Model IDs use aliases** (`claude-sonnet-4-6`), never dated versions.
+- **Model IDs use aliases** (`claude-sonnet-5-5`), never dated versions.
 - **Project-scoped.** Facts and subjects always belong to a project.
 
 ## Adding an MCP tool

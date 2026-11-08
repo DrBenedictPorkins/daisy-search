@@ -92,6 +92,19 @@ def main() -> None:
         "subjects", help="List all research subjects"
     )
 
+    # --- new-search command ---
+    new_search_parser = subparsers.add_parser(
+        "new-search",
+        help="Create a project and scaffold its case workspace",
+    )
+    new_search_parser.add_argument("name", help="Subject or case name")
+    new_search_parser.add_argument(
+        "description",
+        nargs="?",
+        default="investigation",
+        help="Short description of the case",
+    )
+
     # --- worker command ---
     worker_parser = subparsers.add_parser(
         "worker", help="Start an RQ worker process"
@@ -112,11 +125,69 @@ def main() -> None:
         asyncio.run(_cmd_report(args))
     elif args.command == "subjects":
         asyncio.run(_cmd_subjects())
+    elif args.command == "new-search":
+        asyncio.run(_cmd_new_search(args))
     elif args.command == "worker":
         _cmd_worker(args)
     else:
         parser.print_help()
         sys.exit(1)
+
+
+async def _cmd_new_search(args: argparse.Namespace) -> None:
+    """Create the project row and scaffold its workspace in one step."""
+    from pathlib import Path
+
+    from sqlalchemy import select
+
+    from daisy.config import settings
+    from daisy.db import async_session_factory
+    from daisy.models.project import Project
+    from daisy.workspace import (
+        resolve_workspace_dir,
+        scaffold_workspace,
+        slugify,
+    )
+
+    async with async_session_factory() as session:
+        async with session.begin():
+            project = Project(name=args.name, description=args.description)
+            session.add(project)
+            await session.flush()
+            project_id = str(project.id)
+
+        result = await session.execute(
+            select(Project.workspace_path).where(
+                Project.workspace_path.is_not(None),
+                Project.id != project.id,
+            )
+        )
+        claimed = [row[0] for row in result.all()]
+
+    projects_root = Path(settings.projects_dir).resolve()
+    project_dir = resolve_workspace_dir(
+        projects_root, slugify(args.name), claimed
+    )
+    scaffold_workspace(
+        project_dir,
+        subject_name=args.name,
+        project_id=project_id,
+        description=args.description,
+    )
+
+    async with async_session_factory() as session:
+        async with session.begin():
+            result = await session.execute(
+                select(Project).where(Project.id == project.id)
+            )
+            result.scalar_one().workspace_path = str(project_dir)
+
+    print(f"Project:   {args.name}")
+    print(f"ID:        {project_id}")
+    print(f"Workspace: {project_dir}")
+    print()
+    print("To start researching:")
+    print(f"  cd {project_dir} && claude")
 
 
 async def _cmd_intake(args: argparse.Namespace) -> None:

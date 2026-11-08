@@ -84,7 +84,7 @@ Operated via Claude Code or Claude Desktop as an MCP server.
 - All DB access is async (asyncpg). Alembic uses sync (psycopg2).
 - Facts are immutable records. Only lifecycle_state is mutable, logged in fact_events.
 - NEVER hardcode magic strings. Use StrEnum constants from constants.py.
-- LLM model IDs use aliases (claude-sonnet-4-6) not dated versions.
+- LLM model IDs use aliases (claude-sonnet-5-5) not dated versions.
 - Config loaded from .env via pydantic-settings.
 - Projects are the top-level container. All facts/subjects scoped to a project.
 - Every fetch attempt is logged (fetched / auth_wall / error / duplicate) so the record

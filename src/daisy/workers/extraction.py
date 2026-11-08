@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from daisy.constants import (
     DEFAULT_FACT_CONFIDENCE,
+    DEFAULT_LLM_EFFORT,
+    DEFAULT_LLM_MAX_TOKENS,
     WorkerType,
 )
 from daisy.models.fact import Fact
@@ -196,7 +198,8 @@ async def _extract_claims_llm(
             },
             json={
                 "model": model,
-                "max_tokens": 4096,
+                "max_tokens": DEFAULT_LLM_MAX_TOKENS,
+                "output_config": {"effort": DEFAULT_LLM_EFFORT},
                 "messages": [
                     {
                         "role": "user",
@@ -208,8 +211,13 @@ async def _extract_claims_llm(
         resp.raise_for_status()
         data = resp.json()
 
-    # Parse the response
-    response_text = data["content"][0]["text"]
+    if data.get("stop_reason") == "refusal":
+        return []
+    # Parse the response; it can open with a thinking block, so read by type.
+    response_text = next(
+        (b["text"] for b in data["content"] if b.get("type") == "text"),
+        "",
+    )
     try:
         claims = json.loads(response_text)
         if not isinstance(claims, list):

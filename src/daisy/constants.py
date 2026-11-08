@@ -138,9 +138,14 @@ DEFAULT_RESOLUTION_SCORE = 0.0
 # LLM model identifiers — overridable via env vars in Settings
 # ---------------------------------------------------------------------------
 
-DEFAULT_EXTRACTION_MODEL = "claude-sonnet-4-6"
-DEFAULT_RESOLUTION_MODEL = "claude-haiku-4-5"
-DEFAULT_TRIAGE_MODEL = "claude-haiku-4-5"
+DEFAULT_EXTRACTION_MODEL = "claude-sonnet-5-5"
+DEFAULT_RESOLUTION_MODEL = "claude-haiku-5-5"
+DEFAULT_TRIAGE_MODEL = "claude-haiku-5-5"
+
+# Thinking is always on for these models; effort controls its depth and cost.
+DEFAULT_LLM_EFFORT = "low"
+# Thinking counts toward max_tokens, so leave room beyond the reply itself.
+DEFAULT_LLM_MAX_TOKENS = 16000
 
 # Ollama defaults
 DEFAULT_OLLAMA_EXTRACTION_MODEL = "mistral:7b"

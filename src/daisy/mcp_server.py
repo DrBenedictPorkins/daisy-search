@@ -6,7 +6,6 @@ All research operations are scoped to an active project.
 
 import asyncio
 import json
-import re
 import uuid as uuid_mod
 from datetime import date
 
@@ -24,12 +23,15 @@ from sqlalchemy.ext.asyncio import (
 from daisy.config import settings
 from daisy.constants import (
     DEFAULT_FACT_CONFIDENCE,
+    DEFAULT_LLM_EFFORT,
+    DEFAULT_LLM_MAX_TOKENS,
     AliasType,
     ClaimType,
     LifecycleState,
     ProjectStatus,
     SourceType,
 )
+from daisy.workspace import slugify as _workspace_slugify
 
 # ---------------------------------------------------------------------------
 # Database setup (fresh engine for the MCP server process)
@@ -432,6 +434,11 @@ async def _handle_new_project(args: dict) -> str:
     from pathlib import Path
 
     from daisy.models.project import Project
+    from daisy.workspace import (
+        resolve_workspace_dir,
+        scaffold_workspace,
+        slugify,
+    )
 
     async with _session_factory() as session:
         async with session.begin():
@@ -445,44 +452,51 @@ async def _handle_new_project(args: dict) -> str:
             project_id = str(project.id)
             project_name = project.name
 
-    # Create project workspace directory
-    projects_root = Path(settings.projects_dir).resolve()
-    slug = _slugify(project_name)
-    project_dir = projects_root / slug
-    # Avoid collisions with an existing project dir of the same name
-    if project_dir.exists():
-        n = 2
-        while (projects_root / f"{slug}-{n}").exists():
-            n += 1
-        project_dir = projects_root / f"{slug}-{n}"
-    for subdir in [
-        "downloads",
-        "screenshots",
-        "reports",
-        "raw",
-        "notes",
-    ]:
-        (project_dir / subdir).mkdir(parents=True, exist_ok=True)
+        # Directories already claimed by other projects are off limits; an
+        # unclaimed directory of the same name is adopted rather than
+        # sidestepped, so a workspace scaffolded ahead of time is the one the
+        # database points at.
+        result = await session.execute(
+            select(Project.workspace_path).where(
+                Project.workspace_path.is_not(None),
+                Project.id != uuid_mod.UUID(project_id),
+            )
+        )
+        claimed = [row[0] for row in result.all()]
 
-    # Save workspace path to DB
-    from daisy.models.project import Project
+    projects_root = Path(settings.projects_dir).resolve()
+    project_dir = resolve_workspace_dir(
+        projects_root, slugify(project_name), claimed
+    )
+    adopted = project_dir.exists()
+
+    written = scaffold_workspace(
+        project_dir,
+        subject_name=project_name,
+        project_id=project_id,
+        description=args.get("description") or "investigation",
+    )
 
     async with _session_factory() as session:
         async with session.begin():
             result = await session.execute(
-                select(Project).where(
-                    Project.id == uuid_mod.UUID(project_id)
-                )
+                select(Project).where(Project.id == uuid_mod.UUID(project_id))
             )
-            proj = result.scalar_one()
-            proj.workspace_path = str(project_dir)
+            result.scalar_one().workspace_path = str(project_dir)
 
-    return (
-        f"Project created and set as active.\n"
-        f"ID: {project_id}\n"
-        f"Name: {project_name}\n"
-        f"Workspace: {project_dir}"
+    lines_out = [
+        "Project created and set as active.",
+        f"ID: {project_id}",
+        f"Name: {project_name}",
+        f"Workspace: {project_dir}" + (" (adopted existing)" if adopted else ""),
+    ]
+    if written:
+        lines_out.append("Scaffolded: " + ", ".join(written))
+    lines_out.append(
+        "Next: daisy_intake with the name and any seed details "
+        "(locations, employers, usernames, emails)."
     )
+    return "\n".join(lines_out)
 
 
 async def _handle_switch_project(args: dict) -> str:
@@ -541,12 +555,8 @@ async def _handle_archive_project(args: dict) -> str:
     return f"Archived project: {project.name}"
 
 
-def _slugify(text: str) -> str:
-    """Convert text to a filesystem-safe slug."""
-    slug = text.lower().strip()
-    slug = re.sub(r"[^\w\s-]", "", slug)
-    slug = re.sub(r"[\s_]+", "-", slug)
-    return slug[:50].rstrip("-")
+# Single implementation lives in daisy.workspace; re-exported for callers here.
+_slugify = _workspace_slugify
 
 
 def _require_active_project() -> uuid_mod.UUID:
@@ -1641,7 +1651,8 @@ async def _try_extract_anthropic(
                 },
                 json={
                     "model": settings.extraction_model,
-                    "max_tokens": 4096,
+                    "max_tokens": DEFAULT_LLM_MAX_TOKENS,
+                    "output_config": {"effort": DEFAULT_LLM_EFFORT},
                     "messages": [
                         {
                             "role": "user",
@@ -1652,7 +1663,14 @@ async def _try_extract_anthropic(
             )
             resp.raise_for_status()
             data = resp.json()
-            response_text = data["content"][0]["text"]
+            if data.get("stop_reason") == "refusal":
+                return None
+            # Responses can open with a thinking block; read by type.
+            response_text = next(
+                (b["text"] for b in data["content"]
+                 if b.get("type") == "text"),
+                "",
+            )
             return _parse_claims_json(response_text)
     except Exception:
         return None
